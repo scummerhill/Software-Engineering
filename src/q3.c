@@ -95,9 +95,12 @@ void beginGame(){
 
 		for(int i = 0; i < numberOfPlayers; i++){
 			struct Player * player = &players[i];
+
+			//This is to prevent a user that has been defeated from making a move
 			if(player->lifePoints <= 0){
 				continue;
 			}
+
 			char playerChoice;
 			printf("\nIt is %s's turn. You are in position [%d,%d].\nDo you want to move to an adjacent slot [a], attack [b], or quit [c]? ", players[i].name, getSlot(players[i].slotId).column, getSlot(players[i].slotId).row);
 
@@ -127,6 +130,8 @@ void printStatsOfPlayers(){
 	printf("------End Current Stats-----\n\n");
 }
 
+//Checks to see if the user can move in a valid direction
+// And then update that players location once the user picks a direction
 void moveToAdjacentSlot(struct Player * player){
 	struct Slot currentSlot = getSlot(player->slotId);
 	char slotChoice;
@@ -368,6 +373,8 @@ void populateSlots(){
 	}
 }
 
+//This is a unique hash that is used to differentiate
+//between each slot using prime numbers;
 int getUniqueSlotHash(int column, int row)
 {
 	return column * 17 + row * 37;
@@ -497,24 +504,16 @@ void checkForWinner(){
 
 
 bool isAdjacentToPlayer(struct Slot currentPlayerSlot, int enemyPlayerSlotId){
-
-	//Get all the slot hash surrounding player
-	int slotHashAbovePlayer = currentPlayerSlot.topSlotId;
-	int slotHashLeftOfPlayerPlayer = currentPlayerSlot.leftSlotId;
-	int slotHashBelowPlayer = currentPlayerSlot.bottomSlotId;
-	int slotHashRightOfPlayer = currentPlayerSlot.rightSlotId;
-	int currentSlotOfPlayer = currentPlayerSlot.id;
-
-	return enemyPlayerSlotId == slotHashAbovePlayer
-			|| enemyPlayerSlotId == slotHashLeftOfPlayerPlayer
-			|| enemyPlayerSlotId == slotHashBelowPlayer
-			|| enemyPlayerSlotId == slotHashRightOfPlayer
-			|| enemyPlayerSlotId == currentSlotOfPlayer;
+	return enemyPlayerSlotId == currentPlayerSlot.topSlotId
+			|| enemyPlayerSlotId == currentPlayerSlot.leftSlotId
+			|| enemyPlayerSlotId == currentPlayerSlot.bottomSlotId
+			|| enemyPlayerSlotId == currentPlayerSlot.rightSlotId
+			|| enemyPlayerSlotId == currentPlayerSlot.id;
 }
 
+//Starts the initial phase for an attack on an adjacent player, or a player who is on the same tile
 void doNearAttack(struct Player * player)
 {
-	//loop through all the players in the players array
 	for(int i = 0; i < numberOfPlayers; i++){
 		struct Slot currentPlayerSlot = getSlot(player->slotId);
 
@@ -532,6 +531,7 @@ void doNearAttack(struct Player * player)
 	}
 }
 
+//This gives the option to allow a player to attack an enemy
 bool giveDetailsOfPlayerAndChooseToAttack(struct Player * player, struct Player * enemyPlayer, enum AttackType attackType){
 	char playerChoice;
 	printf("There is an enemy near you. Details -> Name : %s, Type: %s, Slot: %s\n", enemyPlayer->name, getPlayerTypeName(enemyPlayer->type), getSlotName(getSlot(enemyPlayer->slotId).type));
@@ -547,8 +547,6 @@ bool giveDetailsOfPlayerAndChooseToAttack(struct Player * player, struct Player 
 
 void doDistantAttack(struct Player * player)
 {
-
-	//loop through all the players in the players array
 	for(int i = 0; i < numberOfPlayers; i++){
 		struct Slot currentPlayerSlot = getSlot(player->slotId);
 		struct Player * enemyPlayer = &players[i];
@@ -564,6 +562,7 @@ void doDistantAttack(struct Player * player)
 	}
 }
 
+//Returns true when distance of enemy is between 1 and 5
 bool isWithinRangeForDistantAttack(struct Slot currentPlayerSlot, struct Slot enemyPlayerSlot){
 
 	int rowDistance = abs(currentPlayerSlot.row - enemyPlayerSlot.row);
@@ -634,7 +633,6 @@ bool attackPlayer(struct Player * attacker, struct Player * attacked, enum Attac
 	return true;
 }
 
-
 void magicAttack(struct Player * attacker, struct Player * attacked){
 	double damage = (0.5 * attacker->magicSkills) + (0.2 * attacker->smartness);
 	printf("Attacking %s for %f\n", attacked->name, damage);
@@ -643,6 +641,7 @@ void magicAttack(struct Player * attacker, struct Player * attacked){
 		attacked->lifePoints = 0;
 	}
 }
+
 
 void nearAttack(struct Player * attacker, struct Player * attacked){
 	if(attacked->strength <= 70){
